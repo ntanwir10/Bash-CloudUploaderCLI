@@ -11,7 +11,9 @@
     {
       "Sid": "AllowPutObject",
       "Effect": "Allow",
-      "Principal": "*",
+      "Principal": {
+        "AWS": "arn:aws:iam::992382493266:root"
+      },
       "Action": "s3:PutObject",
       "Resource": "arn:aws:s3:::cloud-uploader-cli-bucket-020310/*"
     }
