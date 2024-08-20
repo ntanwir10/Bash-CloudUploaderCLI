@@ -1,26 +1,27 @@
 # Bash based CloudUploaderCLI with AWS
 
+#### This project is inspired by @learn-to-cloud guide by @madebygps. Check it out [Learn to cloud](https://learntocloud.guide/phase1/#capstone-project-clouduploader-cli)
+
 `Create a bash-based CLI tool that allows users to quickly upload files to a specified cloud storage solution, providing a seamless upload experience similar to popular storage services.`
 
-Your tool should be able to upload a file:
-  **
-`clouduploader /path/to/file.txt`
+Your tool should be able to upload a file: `clouduploader /path/to/file.txt`
 
-### Steps:[​](https://learntocloud.guide/phase1/#steps)
+### Steps:
 
 **1. Create a GitHub Repo:**
--  [ ] Set up a repository for your project.
--  [ ] Use branches and commit your code often.
--  [ ] Utilize git commands (git init, git add, git commit, git branch, git push, etc.).
+
+- [X] Set up a repository for your project.
+-  [x] Use branches and commit your code often.
+-  [x] Utilize git commands (git init, git add, git commit, git branch, git push, etc.).
 
 **2.Setup & Authentication:**
 
--  [ ] Choose a cloud provider (e.g., AWS S3, Google Cloud Storage, Azure Blob Storage).
--  [ ] Set up authentication (e.g., az login for Azure).
--  [ ] Use secure methods for handling credentials.
-   -  [ ] Avoid hardcoding credentials directly into the script.
+-  [x] Choose a cloud provider (e.g., AWS S3, Google Cloud Storage, Azure Blob Storage).
+-  [x] Set up authentication (e.g., az login for Azure).
+-  [x] Use secure methods for handling credentials.
+   -  [x] Avoid hardcoding credentials directly into the script.
    -  [ ] Store credentials in environment variables or configuration files with restricted access.
-   -  [ ] Utilize cloud provider's secure authentication methods (e.g., IAM roles for AWS, service principals for Azure).
+   -  [x] Utilize cloud provider's secure authentication methods (e.g., IAM roles for AWS, service principals for Azure).
 
 **3.CLI Argument Parsing:**
 
