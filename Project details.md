@@ -1,6 +1,6 @@
 # Bash based CloudUploaderCLI with AWS
 
-#### This project is inspired by @learn-to-cloud guide by @madebygps. Check it out [Learn to cloud](https://learntocloud.guide/phase1/#capstone-project-clouduploader-cli)
+#### This project is inspired by @learn-to-cloud guide by @madebygps and @rishabkumar7. Check it out [Learn to cloud](https://learntocloud.guide/phase1/#capstone-project-clouduploader-cli)
 
 `Create a bash-based CLI tool that allows users to quickly upload files to a specified cloud storage solution, providing a seamless upload experience similar to popular storage services.`
 
