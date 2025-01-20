@@ -3,6 +3,16 @@
 # AWS Utility functions for CloudUploaderCLI
 # This file contains all AWS-specific operations
 
+# Detect OS
+detect_os() {
+    case "$OSTYPE" in
+        msys*|cygwin*)    echo "windows" ;;
+        darwin*)          echo "macos" ;;
+        linux*)           echo "linux" ;;
+        *)               echo "unknown" ;;
+    esac
+}
+
 # Check if AWS CLI is installed and configured
 check_aws_cli() {
     if ! command -v aws &> /dev/null; then
@@ -19,11 +29,13 @@ check_aws_cli() {
     return 0
 }
 
-# Upload file to S3
+# Upload file to S3 with progress bar
 aws_upload_file() {
     local file_path="$1"
     local s3_path="${2:-}"
     local bucket_name="${AWS_BUCKET_NAME:-}"
+    local storage_class="${AWS_STORAGE_CLASS:-STANDARD}"
+    local os=$(detect_os)
 
     # Validate bucket name
     if [[ -z "$bucket_name" ]]; then
@@ -44,11 +56,44 @@ aws_upload_file() {
         s3_uri="${s3_uri}/$(basename "$file_path")"
     fi
 
-    # Upload with progress
-    if aws s3 cp "$file_path" "$s3_uri" --no-progress; then
+    # Prepare AWS CLI options
+    local aws_opts=(
+        --storage-class "$storage_class"
+    )
+
+    # Add encryption if enabled
+    if [[ "${CLIENT_SIDE_ENCRYPTION:-false}" == "true" ]]; then
+        aws_opts+=(--sse-c AES256)
+    fi
+
+    # Upload with progress based on OS
+    if [[ "${SHOW_PROGRESS:-true}" == "true" ]]; then
+        case "$os" in
+            windows)
+                # Windows doesn't support pv, use aws s3 cp with progress
+                aws s3 cp "$file_path" "$s3_uri" "${aws_opts[@]}"
+                ;;
+            *)
+                # Use pv on Unix-like systems if available
+                if command -v pv &> /dev/null; then
+                    pv "$file_path" | aws s3 cp - "$s3_uri" "${aws_opts[@]}"
+                else
+                    aws s3 cp "$file_path" "$s3_uri" "${aws_opts[@]}"
+                fi
+                ;;
+        esac
+    else
+        # Regular upload without progress
+        aws s3 cp "$file_path" "$s3_uri" "${aws_opts[@]}"
+    fi
+
+    local upload_status=$?
+    if [[ $upload_status -eq 0 ]]; then
         # Set public access if requested
         if [[ "${MAKE_PUBLIC:-false}" == "true" ]]; then
-            aws s3api put-object-acl --bucket "$bucket_name" --key "${s3_path}/$(basename "$file_path")" --acl public-read
+            aws s3api put-object-acl --bucket "$bucket_name" \
+                --key "${s3_path}/$(basename "$file_path")" \
+                --acl public-read
         fi
         return 0
     else
@@ -60,7 +105,7 @@ aws_upload_file() {
 generate_presigned_url() {
     local s3_path="$1"
     local bucket_name="${AWS_BUCKET_NAME:-}"
-    local expiry=3600  # 1 hour
+    local expiry="${URL_EXPIRY:-3600}"  # Default 1 hour
 
     if [[ -z "$bucket_name" ]]; then
         echo "Error: AWS_BUCKET_NAME not set"
@@ -86,5 +131,31 @@ check_file_exists() {
     else
         return 1
     fi
+}
+
+# Get S3 object metadata
+get_object_metadata() {
+    local s3_path="$1"
+    local bucket_name="${AWS_BUCKET_NAME:-}"
+
+    if [[ -z "$bucket_name" ]]; then
+        echo "Error: AWS_BUCKET_NAME not set"
+        return 1
+    fi
+
+    aws s3api head-object --bucket "$bucket_name" --key "$s3_path"
+}
+
+# List bucket contents with prefix
+list_bucket_contents() {
+    local prefix="${1:-}"
+    local bucket_name="${AWS_BUCKET_NAME:-}"
+
+    if [[ -z "$bucket_name" ]]; then
+        echo "Error: AWS_BUCKET_NAME not set"
+        return 1
+    fi
+
+    aws s3 ls "s3://${bucket_name}/${prefix}"
 }
 

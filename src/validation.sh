@@ -3,9 +3,34 @@
 # Validation functions for CloudUploaderCLI
 # This file contains all input validation and file checking functions
 
+# Detect OS
+detect_os() {
+    case "$OSTYPE" in
+        msys*|cygwin*)    echo "windows" ;;
+        darwin*)          echo "macos" ;;
+        linux*)           echo "linux" ;;
+        *)               echo "unknown" ;;
+    esac
+}
+
+# Convert Windows path to Unix-style if needed
+normalize_path() {
+    local path="$1"
+    local os=$(detect_os)
+    
+    if [[ "$os" == "windows" ]]; then
+        # Convert Windows backslashes to forward slashes
+        path="${path//\\//}"
+        # Convert C: to /c
+        path="/${path,}"
+        path="${path/:}"
+    fi
+    echo "$path"
+}
+
 # Validate file existence and readability
 validate_file() {
-    local file_path="$1"
+    local file_path=$(normalize_path "$1")
 
     # Check if file exists
     if [[ ! -f "$file_path" ]]; then
@@ -29,16 +54,25 @@ validate_file() {
 
 # Get file size in human-readable format
 get_file_size() {
-    local file_path="$1"
+    local file_path=$(normalize_path "$1")
     local size
+    local os=$(detect_os)
 
-    if [[ "$(uname)" == "Darwin" ]]; then
-        # macOS
-        size=$(stat -f %z "$file_path")
-    else
-        # Linux
-        size=$(stat -c %s "$file_path")
-    fi
+    case "$os" in
+        windows)
+            # Use Windows command to get file size
+            size=$(stat -f %z "$file_path" 2>/dev/null || \
+                  wmic datafile where "name='${file_path//\//\\}'" get filesize 2>/dev/null | grep -v "FileSize" | tr -d '\r\n')
+            ;;
+        macos)
+            # macOS stat command
+            size=$(stat -f %z "$file_path")
+            ;;
+        *)
+            # Linux stat command
+            size=$(stat -c %s "$file_path")
+            ;;
+    esac
 
     # Convert to human readable format
     if ((size < 1024)); then
@@ -60,8 +94,8 @@ validate_s3_path() {
     s3_path="${s3_path#/}"
     s3_path="${s3_path%/}"
 
-    # Check for invalid characters
-    if [[ "$s3_path" =~ [^a-zA-Z0-9\-_/\.] ]]; then
+    # Check for invalid characters (including Windows-specific)
+    if [[ "$s3_path" =~ [^a-zA-Z0-9\-_/\.] || "$s3_path" =~ [\<\>\:\"\\|\?\*] ]]; then
         echo "Error: S3 path contains invalid characters"
         return 1
     fi
@@ -80,8 +114,9 @@ validate_bucket_name() {
         return 1
     fi
 
-    # Check bucket name format
-    if [[ ! "$bucket_name" =~ ^[a-z0-9][a-z0-9\.-]*[a-z0-9]$ ]]; then
+    # Check bucket name format (including Windows considerations)
+    if [[ ! "$bucket_name" =~ ^[a-z0-9][a-z0-9\.-]*[a-z0-9]$ || \
+          "$bucket_name" =~ [\<\>\:\"\\|\?\*] ]]; then
         echo "Error: Invalid bucket name format"
         return 1
     fi

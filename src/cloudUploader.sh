@@ -15,32 +15,49 @@ source "${SCRIPT_DIR}/validation.sh"
 # Constants
 PROGRAM_NAME="clouduploader"
 VERSION="1.0.0"
+VALID_STORAGE_CLASSES="STANDARD REDUCED_REDUNDANCY STANDARD_IA ONEZONE_IA INTELLIGENT_TIERING GLACIER DEEP_ARCHIVE"
 
 # Help message
 show_help() {
-    cat << 'EOF'
+    cat << EOF
 Usage: ${PROGRAM_NAME} [OPTIONS] FILE
 
 Upload files to AWS S3 bucket.
 
 Options:
-    -h, --help              Show this help message
-    -v, --version           Show version information
-    -b, --bucket BUCKET     Specify S3 bucket (overrides default)
-    -p, --path PATH        S3 path/prefix for upload
-    --public               Make the uploaded file publicly accessible
-    --generate-url         Generate a pre-signed URL after upload
+    -h, --help                    Show this help message
+    -v, --version                 Show version information
+    -b, --bucket BUCKET           Specify S3 bucket (overrides default)
+    -p, --path PATH               S3 path/prefix for upload
+    -s, --storage-class CLASS     Storage class (default: STANDARD)
+                                  Valid: ${VALID_STORAGE_CLASSES}
+    --public                      Make the uploaded file publicly accessible
+    --generate-url                Generate a pre-signed URL after upload
+    --sync                        Enable synchronization mode
+    --no-progress                 Disable progress bar
+    --encrypt                     Enable client-side encryption
 
 Examples:
     ${PROGRAM_NAME} file.txt
     ${PROGRAM_NAME} --bucket my-bucket file.txt
     ${PROGRAM_NAME} --path folder/subfolder file.txt
+    ${PROGRAM_NAME} --storage-class STANDARD_IA file.txt
+    ${PROGRAM_NAME} --sync --generate-url file.txt
 EOF
 }
 
 # Version information
 show_version() {
     echo "${PROGRAM_NAME} version ${VERSION}"
+}
+
+# Check if pv is installed for progress bar
+check_pv() {
+    if ! command -v pv &> /dev/null && [[ "${SHOW_PROGRESS:-true}" == "true" ]]; then
+        echo "Warning: 'pv' not installed. Progress bar will be disabled."
+        echo "Install with: brew install pv (macOS) or apt-get install pv (Linux)"
+        export SHOW_PROGRESS=false
+    fi
 }
 
 # Main function to handle file upload
@@ -52,11 +69,27 @@ upload_file() {
     if ! validate_file "$file_path"; then
         echo "Error: File '$file_path' does not exist or is not readable."
         exit 1
-    }
+    fi
 
     # Get file size and start upload
     local file_size=$(get_file_size "$file_path")
-    echo "Uploading file: $file_path (${file_size} bytes)"
+    echo "Uploading file: $file_path (${file_size})"
+    
+    # Check if file exists in S3 when sync is enabled
+    if [[ "${SYNC_MODE:-false}" == "true" ]]; then
+        if check_file_exists "${s3_path}/$(basename "$file_path")"; then
+            read -p "File already exists in S3. Overwrite? (y/n/r[ename]): " choice
+            case "$choice" in
+                y|Y) ;;
+                n|N) echo "Skipping upload."; return 0 ;;
+                r|R) 
+                    read -p "Enter new name: " new_name
+                    s3_path="${s3_path}/${new_name}"
+                    ;;
+                *) echo "Invalid choice. Skipping upload."; return 1 ;;
+            esac
+        fi
+    fi
     
     # Perform the upload
     if aws_upload_file "$file_path" "$s3_path"; then
@@ -79,6 +112,9 @@ main() {
     local FILE=""
     local BUCKET=""
     local S3_PATH=""
+    local STORAGE_CLASS="STANDARD"
+    
+    check_pv
     
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -98,12 +134,32 @@ main() {
                 S3_PATH="$2"
                 shift 2
                 ;;
+            -s|--storage-class)
+                if [[ ! " $VALID_STORAGE_CLASSES " =~ " $2 " ]]; then
+                    echo "Error: Invalid storage class. Valid values: $VALID_STORAGE_CLASSES"
+                    exit 1
+                fi
+                export AWS_STORAGE_CLASS="$2"
+                shift 2
+                ;;
             --public)
                 export MAKE_PUBLIC=true
                 shift
                 ;;
             --generate-url)
                 export GENERATE_URL=true
+                shift
+                ;;
+            --sync)
+                export SYNC_MODE=true
+                shift
+                ;;
+            --no-progress)
+                export SHOW_PROGRESS=false
+                shift
+                ;;
+            --encrypt)
+                export CLIENT_SIDE_ENCRYPTION=true
                 shift
                 ;;
             -*)

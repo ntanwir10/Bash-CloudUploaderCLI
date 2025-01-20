@@ -10,59 +10,83 @@ Your tool should be able to upload a file: `clouduploader /path/to/file.txt`
 
 **1. Create a GitHub Repo:**
 
-- [X] Set up a repository for your project.
--  [x] Use branches and commit your code often.
--  [x] Utilize git commands (git init, git add, git commit, git branch, git push, etc.).
+- [✅] Set up a repository for your project.
+-  [✅] Use branches and commit your code often.
+-  [✅] Utilize git commands (git init, git add, git commit, git branch, git push, etc.).
 
 **2.Setup & Authentication:**
 
--  [x] Choose a cloud provider (e.g., AWS S3, Google Cloud Storage, Azure Blob Storage).
--  [x] Set up authentication (e.g., az login for Azure).
--  [x] Use secure methods for handling credentials.
-   -  [x] Avoid hardcoding credentials directly into the script.
-   -  [ ] Store credentials in environment variables or configuration files with restricted access.
-   -  [x] Utilize cloud provider's secure authentication methods (e.g., IAM roles for AWS, service principals for Azure).
+-  [✅] Choose a cloud provider (e.g., AWS S3, Google Cloud Storage, Azure Blob Storage).
+-  [✅] Set up authentication (e.g., az login for Azure).
+-  [✅] Use secure methods for handling credentials -
+   -  [✅] Avoid hardcoding credentials directly into the script.
+   -  [✅] Store credentials in environment variables or configuration files with restricted access.
+   -  [✅] Utilize cloud provider's secure authentication methods (e.g., IAM roles for AWS, service principals for Azure).
 
 **3.CLI Argument Parsing:**
 
--  [ ] Use bash's built-in `$1`, `$2`, etc., to parse command-line arguments.
--  [ ] `$1` could be the filename or path.
--  [ ] Optionally, allow additional arguments like target cloud directory, storage class, or any other cloud-specific attributes.
--  [ ] Validate and handle different types of input.\\
--  [ ] Check if the provided file path is valid and accessible.
--  [ ] Ensure that additional arguments meet expected formats and values.
--  [ ] Provide meaningful error messages for incorrect or missing inputs
+-  [✅] Use bash's built-in `$1`, `$2`, etc., to parse command-line arguments.
+-  [✅] `$1` could be the filename or path.
+-  [✅] Optionally, allow additional arguments like target cloud directory, storage class, or any other cloud-specific attributes.
+-  [✅] Validate and handle different types of input.\\
+-  [✅] Check if the provided file path is valid and accessible.
+-  [✅] Ensure that additional arguments meet expected formats and values.
+-  [✅] Provide meaningful error messages for incorrect or missing inputs
 
 **4.File Check:**
 
--  [ ] Before uploading, check if the file exists using `[ -f $FILENAME ]`.
--  [ ] Provide feedback if the file is not found.
+-  [✅] Before uploading, check if the file exists using `[ -f $FILENAME ]`.
+-  [✅] Provide feedback if the file is not found.
 
 **5.File Upload:**
 
--  [ ] Use the cloud provider's CLI to upload the file.
--  [ ] Implement error handling to manage potential issues during upload.
+-  [✅] Use the cloud provider's CLI to upload the file.
+-  [✅] Implement error handling to manage potential issues during upload.
 
 **6.Upload Feedback:**
 
--  [ ] On successful upload, provide a success message.
--  [ ] If there's an error, capture the error message and display it to the user.
+-  [✅] On successful upload, provide a success message.
+-  [✅] If there's an error, capture the error message and display it to the user.
 
 **7.Advanced Features (Optional but recommended):**
 
--  [ ] Add a progress bar or percentage upload completion using tools like `pv`.
--  [ ] Provide an option to generate and display a shareable link post-upload.
--  [ ] Enable file synchronization -- if the file already exists in the cloud, prompt the user to overwrite, skip, or rename.
--  [ ] Integrate encryption for added security before the upload.
+-  [✅] Add a progress bar or percentage upload completion using tools like `pv`.
+-  [✅] Provide an option to generate and display a shareable link post-upload.
+-  [✅] Enable file synchronization -- if the file already exists in the cloud, prompt the user to overwrite, skip, or rename.
+-  [✅] Integrate encryption for added security before the upload.
 
 **8.Documentation:**
 
--  [ ] Write a README.md file explaining how to set up, use, and troubleshoot the tool.
--  [ ] Include a brief overview, prerequisites, usage examples, and common issues.
+-  [✅] Write a README.md file explaining how to set up, use, and troubleshoot the tool.
+-  [✅] Include a brief overview, prerequisites, usage examples, and common issues.
 
 **9.Distribution:**
 
--  [ ] Package the script for easy distribution and installation. You can even provide a simple installation script or instructions to add it to the user's `$PATH`.
+-  [✅] Package the script for easy distribution and installation. You can even provide a simple installation script or instructions to add it to the user's `$PATH`.
+
+**10.Installation:** The install.sh script handles everything
+
+-  [✅] Package Script
+    -  [✅] Created install.sh that handles the entire installation process
+    -  [✅] Automatically sets up all required directories
+    -  [✅] Copies files to appropriate locations
+-  [✅] PATH Setup
+    -  [✅] Automatically adds the tool to user's $PATH
+    -  [✅] Creates symlink in /usr/local/bin
+    -  [✅] Updates both .bashrc and .zshrc
+-  [✅] Permissions
+    -  [✅] Sets correct executable permissions
+    -  [✅] Handles file ownership
+    -  [✅] Secures configuration files
+-  [✅] Configuration
+    -  [✅] Creates user-specific config directory
+    -  [✅] Sets up environment files
+    -  [✅] Handles AWS configuration
+-  [✅] Verification
+    -  [✅] Checks prerequisites (AWS CLI, pv)
+    -  [✅] Verifies successful installation
+    -  [✅] Provides clear feedback
+
 
 ## Things you should be able familiar with at the end of this phase[​](https://learntocloud.guide/phase1/#things-you-should-be-able-familiar-with-at-the-end-of-this-phase)
 
