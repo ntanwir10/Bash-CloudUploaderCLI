@@ -1,0 +1,17 @@
+{
+    "default": {
+        "region": "us-east-1",
+        "bucket": "my-clouduploader-bucket",
+        "upload_settings": {
+            "storage_class": "STANDARD",
+            "acl": "private",
+            "default_expiry": 3600
+        },
+        "features": {
+            "enable_encryption": true,
+            "enable_versioning": false,
+            "enable_progress": true,
+            "enable_multipart": true
+        }
+    }
+}

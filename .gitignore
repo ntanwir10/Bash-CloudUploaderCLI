@@ -1,1 +1,37 @@
-.env.local
+# Environment variables
+.env
+.env.*
+!.env.template
+
+# AWS credentials
+.aws/
+aws.credentials
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test files
+tests/temp/
+tests/coverage/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/

@@ -2,20 +2,57 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "AllowGetObject",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::cloud-uploader-cli-bucket-020310/*"
-    },
-    {
-      "Sid": "AllowPutObject",
+      "Sid": "AllowBasicOperations",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::992382493266:root"
+        "AWS": [
+          "arn:aws:iam::992382493266:user/clouduploader-cli-user",
+          "arn:aws:iam::992382493266:role/clouduploader-cli-role"
+        ]
       },
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:PutObjectAcl",
+        "s3:ListBucket",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::cloud-uploader-cli-bucket-020310",
+        "arn:aws:s3:::cloud-uploader-cli-bucket-020310/*"
+      ],
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "true"
+        }
+      }
+    },
+    {
+      "Sid": "DenyUnencryptedObjectUploads",
+      "Effect": "Deny",
+      "Principal": "*",
       "Action": "s3:PutObject",
-      "Resource": "arn:aws:s3:::cloud-uploader-cli-bucket-020310/*"
+      "Resource": "arn:aws:s3:::cloud-uploader-cli-bucket-020310/*",
+      "Condition": {
+        "Null": {
+          "s3:x-amz-server-side-encryption": "true"
+        }
+      }
+    },
+    {
+      "Sid": "DenyInsecureConnections",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::cloud-uploader-cli-bucket-020310",
+        "arn:aws:s3:::cloud-uploader-cli-bucket-020310/*"
+      ],
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
     }
   ]
 }
