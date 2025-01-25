@@ -84,24 +84,6 @@ check_requirements() {
         esac
         exit 1
     fi
-
-    # Check pv (optional)
-    if ! command -v pv &> /dev/null; then
-        echo -e "${YELLOW}Warning: 'pv' is not installed. Progress bar will be disabled.${NC}"
-        local os=$(detect_os)
-        case "$os" in
-            windows)
-                echo "Note: Progress bar not supported on Windows"
-                ;;
-            macos)
-                echo "Install with: brew install pv"
-                ;;
-            linux)
-                echo "Install with: sudo apt-get install pv (Debian/Ubuntu)"
-                echo "or: sudo yum install pv (RHEL/CentOS)"
-                ;;
-        esac
-    fi
 }
 
 # Create directories
@@ -131,16 +113,51 @@ copy_files() {
     
     # Copy files based on OS
     if [[ "$os" == "windows" ]]; then
-        cp -r src/* "$install_dir/"
-        cp config/.env.template "$config_dir/.env.template"
-        cp config/aws_config.json "$config_dir/aws_config.json"
-        # Create batch wrapper for Windows
+        # Copy utility files
+        cp src/aws_utils.sh "$install_dir/"
+        cp src/validation.sh "$install_dir/"
+        cp src/clouduploader.sh "$install_dir/"
+        
+        # Create batch wrapper
         echo "@echo off" > "$install_dir/clouduploader.bat"
         echo "bash \"%~dp0/clouduploader.sh\" %*" >> "$install_dir/clouduploader.bat"
     else
-        sudo cp -r src/* "$install_dir/"
-        cp config/.env.template "$config_dir/.env.template"
-        cp config/aws_config.json "$config_dir/aws_config.json"
+        # Copy utility files
+        sudo cp src/aws_utils.sh "$install_dir/"
+        sudo cp src/validation.sh "$install_dir/"
+        sudo cp src/clouduploader.sh "$install_dir/"
+    fi
+
+    # Create .env template
+    cat > "$config_dir/.env.template" << EOL
+# AWS Credentials - Required for AWS CLI authentication
+AWS_ACCESS_KEY_ID=your_access_key_here
+AWS_SECRET_ACCESS_KEY=your_secret_key_here
+AWS_DEFAULT_REGION=us-east-1
+
+# S3 Configuration
+AWS_BUCKET_NAME=your_bucket_name
+AWS_STORAGE_CLASS=STANDARD
+
+# Application Settings
+CLOUDUPLOADER_DEBUG=false
+CLOUDUPLOADER_LOG_LEVEL=INFO
+CLOUDUPLOADER_MAX_FILE_SIZE=5GB
+
+# Security Settings
+ENABLE_ENCRYPTION=true
+KMS_KEY_ID=your_kms_key_id
+
+# Feature Flags
+ENABLE_PROGRESS_BAR=true
+ENABLE_MULTIPART_UPLOAD=true
+ENABLE_VERSIONING=false
+EOL
+
+    # Create .env if it doesn't exist
+    if [[ ! -f "$config_dir/.env" ]]; then
+        cp "$config_dir/.env.template" "$config_dir/.env"
+        echo -e "${YELLOW}Please edit $config_dir/.env with your AWS credentials${NC}"
     fi
 }
 
@@ -172,12 +189,6 @@ configure_env() {
     local config_dir=$(get_config_dir)
     local os=$(detect_os)
     
-    # Create .env if it doesn't exist
-    if [[ ! -f "$config_dir/.env" ]]; then
-        cp "$config_dir/.env.template" "$config_dir/.env"
-        echo -e "${YELLOW}Please edit $config_dir/.env with your AWS credentials${NC}"
-    fi
-    
     # Add to PATH if needed
     if [[ "$os" != "windows" ]]; then
         if [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
@@ -194,9 +205,11 @@ configure_env() {
 verify_installation() {
     echo "Verifying installation..."
     
+    local install_dir=$(get_install_dir)
     local os=$(detect_os)
+    
     if [[ "$os" == "windows" ]]; then
-        if [[ -f "$(get_install_dir)/clouduploader.bat" ]]; then
+        if [[ -f "$install_dir/clouduploader.bat" ]]; then
             echo -e "${GREEN}CloudUploaderCLI installed successfully!${NC}"
             echo "Run 'clouduploader --help' to get started"
         else
@@ -229,7 +242,7 @@ main() {
     echo "Please:"
     echo "1. Edit $(get_config_dir)/.env with your AWS credentials"
     if [[ $(detect_os) != "windows" ]]; then
-        echo "2. Run 'source ~/.bashrc' or 'source ~/.zshrc'"
+        echo "2. Run 'source ~/.bashrc' or 'source ~/.zshrc' to update your shell"
     fi
     echo "3. Try 'clouduploader --help' to get started"
 }

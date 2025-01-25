@@ -8,9 +8,22 @@ set -e  # Exit on error
 set -u  # Exit on undefined variable
 
 # Source utility functions
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/aws_utils.sh"
-source "${SCRIPT_DIR}/validation.sh"
+SCRIPT_DIR="/usr/local/bin/clouduploader-cli"
+if [[ ! -d "$SCRIPT_DIR" ]]; then
+    # Fallback to the development directory
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+# Source required files
+for util in aws_utils.sh validation.sh; do
+    util_path="$SCRIPT_DIR/$util"
+    if [[ ! -f "$util_path" ]]; then
+        echo "Error: Required utility file not found: $util"
+        echo "Expected location: $util_path"
+        exit 1
+    fi
+    source "$util_path"
+done
 
 # Constants
 PROGRAM_NAME="clouduploader"
