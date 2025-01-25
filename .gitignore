@@ -1,7 +1,7 @@
 # Environment variables
 .env
 .env.*
-!.env.template
+.env.template
 
 # AWS credentials
 .aws/
