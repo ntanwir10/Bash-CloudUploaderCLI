@@ -17,6 +17,65 @@ PROGRAM_NAME="clouduploader"
 VERSION="1.0.0"
 VALID_STORAGE_CLASSES="STANDARD REDUCED_REDUNDANCY STANDARD_IA ONEZONE_IA INTELLIGENT_TIERING GLACIER DEEP_ARCHIVE"
 
+# Detect package manager and install command
+get_package_manager() {
+    if command -v apt-get &> /dev/null; then
+        echo "apt-get install -y"
+    elif command -v yum &> /dev/null; then
+        echo "yum install -y"
+    elif command -v brew &> /dev/null; then
+        echo "brew install"
+    else
+        echo ""
+    fi
+}
+
+# Check and install pv if needed
+check_pv() {
+    if ! command -v pv &> /dev/null && [[ "${SHOW_PROGRESS:-true}" == "true" ]]; then
+        local os=$(detect_os)
+        case "$os" in
+            windows)
+                echo "Warning: Progress bar not supported on Windows"
+                export SHOW_PROGRESS=false
+                return
+                ;;
+            *)
+                local install_cmd=$(get_package_manager)
+                if [[ -z "$install_cmd" ]]; then
+                    echo "Warning: Package manager not found. Please install 'pv' manually."
+                    echo "Progress bar will be disabled."
+                    export SHOW_PROGRESS=false
+                    return
+                fi
+
+                echo "The 'pv' package is required for progress bar functionality."
+                read -p "Would you like to install it now? (y/n): " choice
+                case "$choice" in
+                    y|Y)
+                        echo "Installing pv..."
+                        if [[ "$install_cmd" == *"apt-get"* || "$install_cmd" == *"yum"* ]]; then
+                            sudo $install_cmd pv
+                        else
+                            $install_cmd pv
+                        fi
+                        if ! command -v pv &> /dev/null; then
+                            echo "Failed to install pv. Progress bar will be disabled."
+                            export SHOW_PROGRESS=false
+                        else
+                            echo "Successfully installed pv."
+                        fi
+                        ;;
+                    *)
+                        echo "Progress bar will be disabled."
+                        export SHOW_PROGRESS=false
+                        ;;
+                esac
+                ;;
+        esac
+    fi
+}
+
 # Help message
 show_help() {
     cat << EOF
@@ -49,15 +108,6 @@ EOF
 # Version information
 show_version() {
     echo "${PROGRAM_NAME} version ${VERSION}"
-}
-
-# Check if pv is installed for progress bar
-check_pv() {
-    if ! command -v pv &> /dev/null && [[ "${SHOW_PROGRESS:-true}" == "true" ]]; then
-        echo "Warning: 'pv' not installed. Progress bar will be disabled."
-        echo "Install with: brew install pv (macOS) or apt-get install pv (Linux)"
-        export SHOW_PROGRESS=false
-    fi
 }
 
 # Main function to handle file upload
