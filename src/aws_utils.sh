@@ -3,6 +3,10 @@
 # AWS Utility functions for CloudUploaderCLI
 # This file contains all AWS-specific operations
 
+# Colors
+NEON_GREEN='\033[38;5;82m'
+RESET='\033[0m'
+
 # Detect OS
 detect_os() {
     case "$OSTYPE" in
@@ -66,6 +70,10 @@ aws_upload_file() {
         aws_opts+=(--sse-c AES256)
     fi
 
+    # Get file size for progress calculation
+    local file_size=$(get_file_size "$file_path")
+    echo -e "${NEON_GREEN}Uploading file: $file_path (${file_size})${RESET}"
+
     # Upload with progress based on OS
     if [[ "${SHOW_PROGRESS:-true}" == "true" ]]; then
         case "$os" in
@@ -76,7 +84,8 @@ aws_upload_file() {
             *)
                 # Use pv on Unix-like systems if available
                 if command -v pv &> /dev/null; then
-                    pv "$file_path" | aws s3 cp - "$s3_uri" "${aws_opts[@]}"
+                    # Use configured PV options
+                    pv ${PV_OPTS:--pterb} "$file_path" | aws s3 cp - "$s3_uri" "${aws_opts[@]}"
                 else
                     aws s3 cp "$file_path" "$s3_uri" "${aws_opts[@]}"
                 fi
@@ -95,8 +104,10 @@ aws_upload_file() {
                 --key "${s3_path}/$(basename "$file_path")" \
                 --acl public-read
         fi
+        echo -e "${NEON_GREEN}✅ Upload successful!${RESET}"
         return 0
     else
+        echo -e "${RED}❌ Upload failed!${RESET}"
         return 1
     fi
 }

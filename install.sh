@@ -227,6 +227,24 @@ verify_installation() {
     fi
 }
 
+# Show ASCII banner
+show_banner() {
+    cat << "EOF"
+ ______     __         ______     __  __     _____     
+/\  ___\   /\ \       /\  __ \   /\ \/\ \   /\  __-.  
+\ \ \____  \ \ \____  \ \ \/\ \  \ \ \_\ \  \ \ \/\ \ 
+ \ \_____\  \ \_____\  \ \_____\  \ \_____\  \ \____- 
+  \/_____/   \/_____/   \/_____/   \/_____/   \/____/ 
+    __  __     ______   __         ______     ______     _____     ______     ______    
+   /\ \/\ \   /\  == \ /\ \       /\  __ \   /\  __ \   /\  __-.  /\  ___\   /\  == \   
+   \ \ \_\ \  \ \  _-/ \ \ \____  \ \ \/\ \  \ \  __ \  \ \ \/\ \ \ \  __\   \ \  __<   
+    \ \_____\  \ \_\    \ \_____\  \ \_____\  \ \_\ \_\  \ \____-  \ \_____\  \ \_\ \_\ 
+     \/_____/   \/_/     \/_____/   \/_____/   \/_/\/_/   \/____/   \/_____/   \/_/ /_/ 
+EOF
+    echo "Installation Complete!"
+    echo "----------------------------------------"
+}
+
 # Main installation process
 main() {
     echo "Installing CloudUploaderCLI..."
@@ -238,7 +256,9 @@ main() {
     configure_env
     verify_installation
     
-    echo -e "\n${GREEN}Installation complete!${NC}"
+    echo -e "\n${GREEN}"
+    show_banner
+    echo -e "${NC}"
     echo "Please:"
     echo "1. Edit $(get_config_dir)/.env with your AWS credentials"
     if [[ $(detect_os) != "windows" ]]; then

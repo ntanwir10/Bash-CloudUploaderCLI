@@ -30,6 +30,37 @@ PROGRAM_NAME="clouduploader"
 VERSION="1.0.0"
 VALID_STORAGE_CLASSES="STANDARD REDUCED_REDUNDANCY STANDARD_IA ONEZONE_IA INTELLIGENT_TIERING GLACIER DEEP_ARCHIVE"
 
+# Colors
+NEON_GREEN='\033[38;5;82m'
+RESET='\033[0m'
+
+# Show ASCII banner
+show_banner() {
+    echo -e "${NEON_GREEN}"
+    cat << "EOF"
+ ______     __         ______     __  __     _____     
+/\  ___\   /\ \       /\  __ \   /\ \/\ \   /\  __-.  
+\ \ \____  \ \ \____  \ \ \/\ \  \ \ \_\ \  \ \ \/\ \ 
+ \ \_____\  \ \_____\  \ \_____\  \ \_____\  \ \____- 
+  \/_____/   \/_____/   \/_____/   \/_____/   \/____/ 
+    __  __     ______   __         ______     ______     _____     ______     ______    
+   /\ \/\ \   /\  == \ /\ \       /\  __ \   /\  __ \   /\  __-.  /\  ___\   /\  == \   
+   \ \ \_\ \  \ \  _-/ \ \ \____  \ \ \/\ \  \ \  __ \  \ \ \/\ \ \ \  __\   \ \  __<   
+    \ \_____\  \ \_\    \ \_____\  \ \_____\  \ \_\ \_\  \ \____-  \ \_____\  \ \_\ \_\ 
+     \/_____/   \/_/     \/_____/   \/_____/   \/_/\/_/   \/____/   \/_____/   \/_/ /_/ 
+EOF
+    echo -e "Version: $VERSION"
+    echo -e "----------------------------------------${RESET}"
+}
+
+# Configure pv with neon green color
+configure_pv() {
+    # Set PV_COLORS environment variable for neon green progress bar
+    export PV_COLORS="0;32"  # Bright green
+    # Additional PV options for better visibility
+    export PV_OPTS="-pterb"  # progress, timer, rate, bytes
+}
+
 # Detect package manager and install command
 get_package_manager() {
     if command -v apt-get &> /dev/null; then
@@ -62,7 +93,7 @@ check_pv() {
                     return
                 fi
 
-                echo "The 'pv' package is required for progress bar functionality."
+                echo -e "${NEON_GREEN}The 'pv' package is required for progress bar functionality.${RESET}"
                 read -p "Would you like to install it now? (y/n): " choice
                 case "$choice" in
                     y|Y)
@@ -76,7 +107,8 @@ check_pv() {
                             echo "Failed to install pv. Progress bar will be disabled."
                             export SHOW_PROGRESS=false
                         else
-                            echo "Successfully installed pv."
+                            echo -e "${NEON_GREEN}Successfully installed pv.${RESET}"
+                            configure_pv
                         fi
                         ;;
                     *)
@@ -86,11 +118,14 @@ check_pv() {
                 esac
                 ;;
         esac
+    else
+        configure_pv
     fi
 }
 
 # Help message
 show_help() {
+    show_banner
     cat << EOF
 Usage: ${PROGRAM_NAME} [OPTIONS] FILE
 
@@ -120,13 +155,15 @@ EOF
 
 # Version information
 show_version() {
-    echo "${PROGRAM_NAME} version ${VERSION}"
+    show_banner
 }
 
 # Main function to handle file upload
 upload_file() {
     local file_path="$1"
     local s3_path="${2:-}"
+    
+    show_banner
     
     # Validate file existence
     if ! validate_file "$file_path"; then

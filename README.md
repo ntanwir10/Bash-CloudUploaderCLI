@@ -1,5 +1,7 @@
 # CloudUploaderCLI
 
+![CloudUploader CLI Banner](assets/clouduploadcli.png)
+
 A powerful bash-based CLI tool for uploading files to AWS S3, providing a seamless upload experience with advanced features.
 
 ## Features
@@ -84,6 +86,9 @@ clouduploader file.txt
 ```
 
 ### Common Options (All Platforms)
+
+![CloudUploader CLI Usage Options](assets/cli_usage_options.png)
+
 ```bash
 # Upload with custom bucket
 clouduploader --bucket my-bucket file.txt
